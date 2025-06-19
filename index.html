@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Podcast Topic Visualizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,124 +13,320 @@
         }
         
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             overflow: hidden;
+            color: #333;
         }
         
         #container {
             position: relative;
             width: 100vw;
             height: 100vh;
+            display: flex;
+        }
+        
+        /* Left Panel */
+        #leftPanel {
+            width: 400px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
         }
         
         #ui {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 100;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-            max-width: 450px;
+            padding: 30px;
+            flex: 1;
+            overflow-y: auto;
         }
         
-        h3 {
-            color: #333;
-            margin-bottom: 15px;
-            font-size: 20px;
+        h1 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
         
         .description {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 20px;
-            line-height: 1.4;
+            color: #6b7280;
+            font-size: 16px;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            font-weight: 400;
         }
         
         #transcriptInput {
             width: 100%;
-            height: 180px;
-            padding: 15px;
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
-            font-size: 14px;
+            height: 200px;
+            padding: 20px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            font-size: 15px;
             resize: vertical;
-            font-family: Arial, sans-serif;
-            line-height: 1.5;
-            transition: border-color 0.3s;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            transition: all 0.3s ease;
+            background: #fafafa;
         }
         
         #transcriptInput:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: #1e3c72;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
         }
         
         .char-counter {
-            font-size: 12px;
-            color: #888;
+            font-size: 13px;
+            color: #9ca3af;
             text-align: right;
-            margin: 8px 0;
+            margin: 12px 0;
+            font-weight: 500;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
         }
         
         #analyzeBtn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
             border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
+            padding: 16px 24px;
+            border-radius: 10px;
             cursor: pointer;
             font-size: 16px;
             font-weight: 600;
-            width: 100%;
-            transition: all 0.3s;
+            font-family: 'Inter', sans-serif;
+            flex: 1;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
         }
         
         #analyzeBtn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 25px rgba(30, 60, 114, 0.4);
         }
         
         #analyzeBtn:disabled {
-            background: #ccc;
+            background: #9ca3af;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
         }
         
+        #demoBtn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 16px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+        }
+        
+        #demoBtn:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+        
         #status {
-            margin-top: 15px;
-            padding: 10px;
-            font-size: 13px;
-            border-radius: 6px;
-            min-height: 20px;
+            padding: 16px;
+            font-size: 14px;
+            border-radius: 10px;
+            font-weight: 500;
+            line-height: 1.5;
         }
         
         .status-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
         }
         
         .status-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
         }
         
         .status-info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
+            background: #eff6ff;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
         }
         
+        /* Right Panel - Visualization */
+        #visualizationPanel {
+            flex: 1;
+            position: relative;
+            background: #0f1419;
+            border-left: 3px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        #visualizationContainer {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Topics Analysis Panel */
+        #topicsPanel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(15px);
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        #topicsPanel h3 {
+            color: #60a5fa;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .topic-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        
+        .topic-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #60a5fa;
+        }
+        
+        .topic-item h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #e5e7eb;
+        }
+        
+        .topic-item p {
+            font-size: 12px;
+            color: #9ca3af;
+            line-height: 1.4;
+        }
+        
+        /* Topic Info Panel */
+        #topicInfo {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 350px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-height: 70vh;
+            overflow-y: auto;
+            display: none;
+            z-index: 200;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        #topicInfo .header {
+            padding: 25px 25px 15px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        #topicInfo h3 {
+            color: #1e3c72;
+            margin-bottom: 8px;
+            font-size: 20px;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+        
+        #topicInfo p {
+            color: #6b7280;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+        
+        #topicQuotes {
+            padding: 20px 25px;
+        }
+        
+        .quote {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            padding: 16px;
+            margin: 12px 0;
+            border-left: 4px solid #1e3c72;
+            font-style: italic;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        #closeInfo {
+            margin: 0 25px 25px;
+            padding: 10px 20px;
+            background: #1e3c72;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+        }
+        
+        #closeInfo:hover {
+            background: #2a5298;
+        }
+        
+        /* Instructions */
+        #instructions {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 14px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 16px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-family: 'Inter', sans-serif;
+        }
+        
+        #instructions h4 {
+            margin-bottom: 10px;
+            color: #60a5fa;
+            font-weight: 600;
+        }
+        
+        /* Loading animation */
         .loading {
             display: inline-block;
             width: 16px;
             height: 16px;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #667eea;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid #ffffff;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-right: 8px;
@@ -139,155 +336,118 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
-        #topicInfo {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 100;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            max-width: 400px;
-            max-height: 80vh;
-            overflow-y: auto;
-            display: none;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        
-        #topicInfo h3 {
-            color: #667eea;
-            margin-bottom: 10px;
-            font-size: 18px;
-        }
-        
-        #topicInfo p {
-            color: #555;
-            line-height: 1.5;
-            margin-bottom: 15px;
-        }
-        
-        .quote {
-            background: linear-gradient(135deg, #f7f7f7 0%, #e8f4f8 100%);
-            padding: 12px;
-            margin: 10px 0;
-            border-left: 4px solid #667eea;
-            font-style: italic;
-            border-radius: 6px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-        
-        #instructions {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            color: white;
-            font-size: 14px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 10px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        #instructions h4 {
-            margin-bottom: 8px;
-            color: #87ceeb;
-        }
     </style>
 </head>
 <body>
     <div id="container">
-        <div id="ui">
-            <h3>🎙️ Podcast Topic Visualizer</h3>
-            <p class="description">
-                Paste your podcast transcript below and discover the main topics in an interactive 3D visualization.
-            </p>
-            
-            <textarea id="transcriptInput" placeholder="Paste your podcast transcript here...
+        <!-- Left Panel -->
+        <div id="leftPanel">
+            <div id="ui">
+                <h1>🎙️ Topic Visualizer</h1>
+                <p class="description">
+                    Transform podcast transcripts into interactive 3D visualizations. Discover topics, explore connections, and dive deep into content insights.
+                </p>
+                
+                <textarea id="transcriptInput" placeholder="Paste your podcast transcript here...
 
 Example:
 Welcome to our podcast about artificial intelligence. Today we're discussing how AI is transforming the healthcare industry. Our guest, Dr. Sarah Johnson, is a leading researcher in medical AI applications. We'll explore machine learning algorithms used in diagnostics, the ethical considerations of AI in medicine, and future trends in healthcare automation..."></textarea>
+                
+                <div class="char-counter">
+                    <span id="charCount">0</span> characters (minimum 200 recommended)
+                </div>
+                
+                <div class="button-group">
+                    <button id="analyzeBtn">✨ Analyze Topics</button>
+                    <button id="demoBtn">🎮 Demo</button>
+                </div>
+                
+                <div id="status"></div>
+            </div>
+        </div>
+        
+        <!-- Right Panel - Visualization -->
+        <div id="visualizationPanel">
+            <div id="visualizationContainer"></div>
             
-            <div class="char-counter">
-                <span id="charCount">0</span> characters (minimum 200 recommended)
+            <!-- Topics Analysis Panel -->
+            <div id="topicsPanel">
+                <h3>📊 Analyzed Topics</h3>
+                <div id="topicsList" class="topic-list"></div>
             </div>
             
-            <button id="analyzeBtn">✨ Analyze Topics</button>
-            <button id="demoBtn" style="background: #28a745; margin-top: 10px; padding: 8px 16px; border: none; border-radius: 5px; color: white; cursor: pointer; font-size: 14px;">🎮 Show Demo Visualization</button>
-            <div id="status"></div>
+            <!-- Instructions -->
+            <div id="instructions">
+                <h4>🎮 Controls</h4>
+                • Drag to rotate view<br>
+                • Scroll to zoom<br>
+                • Click bubbles for details<br>
+                • Explore topic connections
+            </div>
         </div>
         
+        <!-- Topic Detail Panel -->
         <div id="topicInfo">
-            <h3 id="topicTitle"></h3>
-            <p id="topicDescription"></p>
-            <div id="topicQuotes"></div>
-            <button id="closeInfo" style="margin-top: 10px; padding: 5px 10px; background: #667eea; color: white; border: none; border-radius: 3px; cursor: pointer;">Close</button>
-        </div>
-        
-        <div id="instructions">
-            <h4>🎮 Controls:</h4>
-            • Click and drag to rotate view<br>
-            • Scroll to zoom in/out<br>
-            • Click bubbles to explore topics<br>
-            • Hover for highlighting effects
+            <div class="header">
+                <h3 id="topicTitle">Topic Title</h3>
+                <p id="topicDescription">Topic description will appear here</p>
+            </div>
+            <div id="topicQuotes">
+                <!-- Quotes and additional info will be populated here -->
+            </div>
+            <button id="closeInfo">Close</button>
         </div>
     </div>
     
     <script>
-        // Initialize character counter
-        const transcriptInput = document.getElementById('transcriptInput');
-        const charCountEl = document.getElementById('charCount');
-        
-        transcriptInput.addEventListener('input', (e) => {
-            const charCount = e.target.value.length;
-            charCountEl.textContent = charCount.toLocaleString();
+        // Initialize character counter and demo functionality
+        function initializeApp() {
+            const transcriptInput = document.getElementById('transcriptInput');
+            const charCountEl = document.getElementById('charCount');
             
-            // Update counter color based on length
-            if (charCount < 200) {
-                charCountEl.style.color = '#dc3545';
-            } else if (charCount < 500) {
-                charCountEl.style.color = '#ffc107';
-            } else {
-                charCountEl.style.color = '#28a745';
-            }
-        });
-        
-        // Test server connection on load
-        window.addEventListener('DOMContentLoaded', function() {
-            fetch('http://localhost:3001/health')
-                .then(response => response.json())
-                .then(data => {
-                    updateStatus('✅ Ready to analyze transcripts!', 'info');
-                })
-                .catch(error => {
-                    updateStatus('❌ Server not running. Start with: npm run dev', 'error');
-                });
-        });
-        
-        function updateStatus(message, type = 'info') {
-            const statusEl = document.getElementById('status');
-            statusEl.textContent = message;
-            statusEl.className = `status-${type}`;
-        }
-        
-        // Add demo button functionality
-        window.addEventListener('DOMContentLoaded', function() {
-            const demoBtn = document.getElementById('demoBtn');
-            if (demoBtn) {
-                demoBtn.addEventListener('click', function() {
-                    console.log('Demo button clicked');
-                    updateStatus('🎮 Creating demo visualization...', 'info');
+            if (transcriptInput && charCountEl) {
+                transcriptInput.addEventListener('input', function(e) {
+                    const charCount = e.target.value.length;
+                    charCountEl.textContent = charCount.toLocaleString();
                     
-                    // Trigger demo visualization through global visualizer
-                    if (window.visualizer) {
-                        window.visualizer.createDemoVisualization();
+                    // Update counter color based on length
+                    if (charCount < 200) {
+                        charCountEl.style.color = '#dc2626';
+                    } else if (charCount < 500) {
+                        charCountEl.style.color = '#d97706';
+                    } else {
+                        charCountEl.style.color = '#059669';
                     }
                 });
             }
-        });
+            
+            // Test server connection on load
+            fetch('http://localhost:3001/health')
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
+                    updateStatus('✅ Ready to analyze transcripts!', 'info');
+                })
+                .catch(function(error) {
+                    updateStatus('❌ Server not running. Start with: npm run dev', 'error');
+                });
+        }
+        
+        function updateStatus(message, type) {
+            const statusEl = document.getElementById('status');
+            if (statusEl) {
+                statusEl.textContent = message;
+                statusEl.className = 'status-' + type;
+            }
+        }
+        
+        // Initialize when DOM is loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            initializeApp();
+        }
     </script>
     <script type="module" src="/main.js"></script>
 </body>

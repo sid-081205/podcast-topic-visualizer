@@ -97,23 +97,42 @@ app.post('/api/analyze', async (req, res) => {
           messages: [
             {
               role: "user",
-              content: `Extract 3 main topics from this text. Return ONLY valid JSON:
+              content: `Analyze this transcript and identify 3-5 SPECIFIC, CONCRETE topics that are actually discussed in detail. 
 
+DO NOT create generic topics like "Introduction", "Main Discussion", "Conclusion".
+DO NOT create topics like "Key Points" or "Final Thoughts".
+
+Instead, identify the ACTUAL SUBJECTS being talked about, such as:
+- Specific technologies mentioned
+- Particular concepts explained  
+- Named methodologies discussed
+- Concrete examples given
+- Specific industries/fields covered
+
+Return ONLY valid JSON:
 {
   "mainTopics": [
     {
       "id": 1,
-      "title": "Topic Title",
-      "description": "What this topic covers",
-      "quotes": ["Direct quote from text"],
-      "position": {"x": 0, "y": 0, "z": 0},
-      "size": 4,
-      "subtopics": []
+      "title": "Specific Topic Name (not generic)",
+      "description": "What specifically is discussed about this topic",
+      "quotes": ["Direct quote from transcript", "Another specific quote"],
+      "keywords": ["keyword1", "keyword2"],
+      "subtopics": [
+        {
+          "id": 11,
+          "title": "Specific subtopic",
+          "description": "Specific aspect discussed",
+          "quotes": ["Relevant quote"]
+        }
+      ]
     }
   ]
 }
 
-Text: "${cleanedTranscript.substring(0, 3000)}"`
+Focus on CONCRETE topics that someone could learn something specific about.
+
+Transcript: "${cleanedTranscript.substring(0, 4000)}"`
             }
           ]
         });
