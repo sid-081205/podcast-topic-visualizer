@@ -10,6 +10,8 @@ class PodcastVisualizer {
         this.topics = [];
         this.topicMeshes = [];
         this.isAnalyzing = false;
+        this.currentHoveredTopic = null; // Track current hovered topic
+        this.tooltipPosition = null; // Store tooltip position
         
         this.init();
         this.setupEventListeners();
@@ -641,8 +643,7 @@ class PodcastVisualizer {
             isHovered: false
         };
         
-        // Create floating label
-        this.createFloatingLabel(topic.title || 'Topic ' + (index + 1), sphere.position, size);
+        // Remove the floating label creation - no default text on bubbles
         
         // Add glow effect for hover
         const glowGeometry = new THREE.SphereGeometry(size * 1.3, 16, 16);
@@ -711,8 +712,7 @@ class PodcastVisualizer {
             this.topicMeshes.push(connectionLine);
         }
         
-        // Create floating label
-        this.createFloatingLabel(subtopic.title || 'Subtopic ' + (index + 1), sphere.position, size * 0.7);
+        // Remove the floating label creation - no default text on subtopic bubbles
         
         // Add glow effect for subtopics
         const glowGeometry = new THREE.SphereGeometry(size * 1.2, 12, 12);
@@ -863,26 +863,36 @@ class PodcastVisualizer {
         
         const intersects = this.raycaster.intersectObjects(hoverableObjects);
         
-        // Reset all hover states first
-        this.resetHoverEffects();
-        
         if (intersects.length > 0) {
             const hoveredMesh = intersects[0].object;
             const hoveredTopic = hoveredMesh.userData.topic;
             
-            // Change cursor
-            document.body.style.cursor = 'pointer';
-            
-            // Apply hover effects
-            this.applyHoverEffects(hoveredMesh);
-            
-            // Show preview tooltip
-            this.showTopicPreview(hoveredTopic, event);
+            // If we're hovering a different topic, reset and show new one
+            if (this.currentHoveredTopic !== hoveredTopic) {
+                this.resetHoverEffects();
+                this.currentHoveredTopic = hoveredTopic;
+                this.tooltipPosition = null; // Reset position for new topic
+                
+                // Change cursor
+                document.body.style.cursor = 'pointer';
+                
+                // Apply hover effects
+                this.applyHoverEffects(hoveredMesh);
+                
+                // Show preview tooltip with fixed position
+                this.showTopicPreview(hoveredTopic, event);
+            }
+            // If we're still on the same topic, do nothing (keep tooltip visible)
             
         } else {
-            // Reset cursor
-            document.body.style.cursor = 'default';
-            this.hideTopicPreview();
+            // Only reset if we were hovering something and now we're not
+            if (this.currentHoveredTopic !== null) {
+                this.resetHoverEffects();
+                this.currentHoveredTopic = null;
+                this.tooltipPosition = null;
+                document.body.style.cursor = 'default';
+                this.hideTopicPreview();
+            }
         }
     }
     
@@ -988,13 +998,10 @@ class PodcastVisualizer {
                 
                 if (mesh.userData.connectionLine) {
                     mesh.userData.connectionLine.material.opacity = 0.3;
-                    mesh.userData.connectionLine.material.color.setRGB(0.53, 0.81, 0.92); // Original light blue
+                    mesh.userData.connectionLine.material.color.setRGB(0.53, 0.81, 0.92);
                 }
             }
         });
-        
-        document.body.style.cursor = 'default';
-        this.hideTopicPreview();
     }
     
     showTopicPreview(topic, event) {
@@ -1004,98 +1011,155 @@ class PodcastVisualizer {
             preview = document.createElement('div');
             preview.id = 'topicPreview';
             preview.style.position = 'fixed';
-            preview.style.background = 'rgba(0, 0, 0, 0.95)';
+            preview.style.background = 'rgba(15, 20, 25, 0.98)';
             preview.style.color = 'white';
-            preview.style.padding = '16px 20px';
-            preview.style.borderRadius = '12px';
-            preview.style.fontSize = '14px';
-            preview.style.maxWidth = '320px';
+            preview.style.padding = '20px 24px';
+            preview.style.borderRadius = '16px';
+            preview.style.fontSize = '15px';
+            preview.style.maxWidth = '380px';
             preview.style.zIndex = '1000';
             preview.style.pointerEvents = 'none';
-            preview.style.fontFamily = 'Inter, sans-serif';
-            preview.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.4)';
-            preview.style.border = '1px solid rgba(255, 255, 255, 0.2)';
-            preview.style.backdropFilter = 'blur(10px)';
-            preview.style.lineHeight = '1.4';
+            preview.style.fontFamily = 'Inter, -apple-system, BlinkMacSystemFont, sans-serif';
+            preview.style.boxShadow = '0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1)';
+            preview.style.backdropFilter = 'blur(20px)';
+            preview.style.lineHeight = '1.6';
+            preview.style.fontWeight = '400';
+            preview.style.letterSpacing = '0.02em';
             document.body.appendChild(preview);
         }
         
-        // Update content with rich preview
-        let content = '<div style="font-weight: 600; font-size: 16px; color: #60a5fa; margin-bottom: 8px;">' + topic.title + '</div>';
+        // Create clean, high-quality text content
+        let content = '';
         
+        // Title with elegant styling
+        content += '<div style="font-weight: 700; font-size: 20px; color: #ffffff; margin-bottom: 12px; line-height: 1.3;">';
+        content += topic.title;
+        content += '</div>';
+        
+        // Description with refined typography
         if (topic.description) {
-            const shortDesc = topic.description.length > 120 ? 
-                topic.description.substring(0, 120) + '...' : 
+            const cleanDesc = topic.description.length > 140 ? 
+                topic.description.substring(0, 140) + '...' : 
                 topic.description;
-            content += '<div style="color: #e5e7eb; font-size: 13px; margin-bottom: 10px;">' + shortDesc + '</div>';
-        }
-        
-        if (topic.keywords && topic.keywords.length > 0) {
-            content += '<div style="margin-bottom: 8px;">';
-            content += '<span style="color: #fbbf24; font-size: 11px; font-weight: 500;">Keywords: </span>';
-            content += '<span style="color: #d1d5db; font-size: 11px;">' + topic.keywords.slice(0, 4).join(', ') + '</span>';
+            content += '<div style="color: #e2e8f0; font-size: 14px; margin-bottom: 16px; line-height: 1.5; font-weight: 400;">';
+            content += cleanDesc;
             content += '</div>';
         }
         
+        // Key quotes section with premium styling
         if (topic.quotes && topic.quotes.length > 0) {
-            content += '<div style="color: #9ca3af; font-size: 11px; font-style: italic; margin-bottom: 8px;">';
-            content += '"' + (topic.quotes[0].length > 80 ? topic.quotes[0].substring(0, 80) + '...' : topic.quotes[0]) + '"';
+            content += '<div style="margin-bottom: 16px;">';
+            content += '<div style="color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Key Quote</div>';
+            const quote = topic.quotes[0].length > 100 ? topic.quotes[0].substring(0, 100) + '...' : topic.quotes[0];
+            content += '<div style="color: #f1f5f9; font-size: 13px; font-style: italic; line-height: 1.6; padding-left: 12px; border-left: 3px solid #3b82f6;">';
+            content += '"' + quote + '"';
+            content += '</div>';
             content += '</div>';
         }
         
+        // Keywords with clean badges
+        if (topic.keywords && topic.keywords.length > 0) {
+            content += '<div style="margin-bottom: 16px;">';
+            content += '<div style="color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Keywords</div>';
+            content += '<div style="display: flex; flex-wrap: wrap; gap: 6px;">';
+            
+            topic.keywords.slice(0, 5).forEach(function(keyword) {
+                content += '<span style="';
+                content += 'background: rgba(59, 130, 246, 0.15); ';
+                content += 'color: #93c5fd; ';
+                content += 'padding: 4px 10px; ';
+                content += 'border-radius: 20px; ';
+                content += 'font-size: 11px; ';
+                content += 'font-weight: 500; ';
+                content += 'border: 1px solid rgba(59, 130, 246, 0.2);';
+                content += '">' + keyword + '</span>';
+            });
+            
+            content += '</div>';
+            content += '</div>';
+        }
+        
+        // Subtopics indicator with clean design
         if (topic.subtopics && topic.subtopics.length > 0) {
-            content += '<div style="color: #34d399; font-size: 11px; font-weight: 500;">';
-            content += '📊 ' + topic.subtopics.length + ' subtopic' + (topic.subtopics.length > 1 ? 's' : '') + ' available';
+            content += '<div style="margin-bottom: 12px;">';
+            content += '<div style="color: #94a3b8; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">Subtopics</div>';
+            content += '<div style="color: #10b981; font-size: 13px; font-weight: 600;">';
+            content += '● ' + topic.subtopics.length + ' detailed subtopic' + (topic.subtopics.length > 1 ? 's' : '') + ' available';
+            content += '</div>';
             content += '</div>';
         }
         
-        content += '<div style="color: #6b7280; font-size: 10px; margin-top: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px;">';
-        content += '💡 Click to explore in depth';
+        // Action hint with subtle styling
+        content += '<div style="';
+        content += 'color: #64748b; ';
+        content += 'font-size: 11px; ';
+        content += 'margin-top: 16px; ';
+        content += 'padding-top: 12px; ';
+        content += 'border-top: 1px solid rgba(255, 255, 255, 0.1); ';
+        content += 'font-weight: 500; ';
+        content += 'text-align: center;';
+        content += '">';
+        content += 'Click to explore detailed analysis';
         content += '</div>';
         
         preview.innerHTML = content;
         
-        // Position tooltip
-        const mouseX = event.clientX;
-        const mouseY = event.clientY;
-        const previewWidth = 320;
-        const previewHeight = 200;
-        
-        let left = mouseX + 15;
-        let top = mouseY - 10;
-        
-        if (left + previewWidth > window.innerWidth) {
-            left = mouseX - previewWidth - 15;
+        // Calculate position only once when tooltip is first shown
+        if (!this.tooltipPosition) {
+            const mouseX = event.clientX;
+            const mouseY = event.clientY;
+            const previewWidth = 380;
+            const previewHeight = 300;
+            
+            let left = mouseX + 25;
+            let top = mouseY - 50;
+            
+            // Boundary checks
+            if (left + previewWidth > window.innerWidth - 10) {
+                left = mouseX - previewWidth - 25;
+            }
+            if (top + previewHeight > window.innerHeight - 10) {
+                top = window.innerHeight - previewHeight - 10;
+            }
+            if (top < 10) {
+                top = 10;
+            }
+            if (left < 10) {
+                left = 10;
+            }
+            
+            // Store the calculated position
+            this.tooltipPosition = { left, top };
         }
-        if (top + previewHeight > window.innerHeight) {
-            top = mouseY - previewHeight + 10;
-        }
-        if (top < 0) {
-            top = 10;
-        }
         
-        preview.style.left = left + 'px';
-        preview.style.top = top + 'px';
-        preview.style.display = 'block';
-        preview.style.opacity = '0';
-        preview.style.transform = 'translateY(10px)';
+        // Apply the stored position
+        preview.style.left = this.tooltipPosition.left + 'px';
+        preview.style.top = this.tooltipPosition.top + 'px';
         
-        setTimeout(() => {
-            preview.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
-            preview.style.opacity = '1';
-            preview.style.transform = 'translateY(0)';
-        }, 10);
+        // Show tooltip if it's hidden
+        if (preview.style.display === 'none' || !preview.style.display) {
+            preview.style.display = 'block';
+            preview.style.opacity = '0';
+            preview.style.transform = 'translateY(8px) scale(0.96)';
+            
+            // Smooth entrance animation
+            setTimeout(() => {
+                preview.style.transition = 'opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s cubic-bezier(0.16, 1, 0.3, 1)';
+                preview.style.opacity = '1';
+                preview.style.transform = 'translateY(0) scale(1)';
+            }, 10);
+        }
     }
     
     hideTopicPreview() {
         const preview = document.getElementById('topicPreview');
         if (preview) {
-            preview.style.transition = 'opacity 0.15s ease, transform 0.15s ease';
+            preview.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
             preview.style.opacity = '0';
-            preview.style.transform = 'translateY(-5px)';
+            preview.style.transform = 'translateY(-4px) scale(0.98)';
             setTimeout(() => {
                 preview.style.display = 'none';
-            }, 150);
+            }, 200);
         }
     }
 
@@ -1439,32 +1503,32 @@ class PodcastVisualizer {
     animate() {
         requestAnimationFrame(() => this.animate());
         
-        // Add gentle floating animation
+        // Minimal floating animation to reduce movement
         const time = Date.now() * 0.001;
         
         this.topicMeshes.forEach(mesh => {
             if (mesh.userData && mesh.userData.topic && mesh.userData.type) {
-                // Gentle floating motion
-                const floatSpeed = mesh.userData.type === 'main' ? 0.5 : 0.3;
-                const floatAmount = mesh.userData.type === 'main' ? 2 : 1;
+                // Very gentle floating motion - much reduced
+                const floatSpeed = mesh.userData.type === 'main' ? 0.2 : 0.15; // Reduced from 0.5/0.3
+                const floatAmount = mesh.userData.type === 'main' ? 0.8 : 0.4; // Reduced from 2/1
                 const offset = mesh.userData.index || 0;
                 
                 if (mesh.userData.originalPosition) {
                     mesh.position.y = mesh.userData.originalPosition.y + 
                         Math.sin(time * floatSpeed + offset) * floatAmount;
                     
-                    // Update glow position
+                    // Update glow position to follow sphere
                     if (mesh.userData.glow) {
                         mesh.userData.glow.position.copy(mesh.position);
                     }
                 }
                 
-                // Gentle rotation for main topics
+                // Very slow rotation for main topics - reduced
                 if (mesh.userData.type === 'main') {
-                    mesh.rotation.y += 0.003;
+                    mesh.rotation.y += 0.001; // Reduced from 0.003
                 }
                 
-                // Pulse glow effect when hovered
+                // Pulse glow effect when hovered - keep this as is
                 if (mesh.userData.isHovered && mesh.userData.glow) {
                     mesh.userData.glow.material.opacity = 0.3 + Math.sin(time * 4) * 0.15;
                 }
