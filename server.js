@@ -22,179 +22,172 @@ app.get('/health', (req, res) => {
 
 // Analyze transcript with Claude AI
 app.post('/api/analyze', async (req, res) => {
-  try {
-    console.log('=== ANALYSIS REQUEST START ===');
-    console.log('Received analysis request');
-    const { transcript } = req.body;
-    
-    if (!transcript) {
-      console.error('No transcript provided');
-      return res.status(400).json({ error: 'Transcript is required' });
-    }
-    
-    console.log('Transcript length:', transcript.length);
-    console.log('Transcript preview:', transcript.substring(0, 200) + '...');
-    
-    if (transcript.length < 200) {
-      console.error('Transcript too short:', transcript.length);
-      return res.status(400).json({ error: 'Transcript too short. Please provide at least 200 characters for meaningful analysis.' });
-    }
-    
-    // Always create a fallback first
-    const createFallback = () => {
-      console.log('Creating fallback analysis...');
-      const words = transcript.toLowerCase().split(/\s+/);
-      const sentences = transcript.split(/[.!?]+/).filter(s => s.trim().length > 20);
-      
-      return {
-        mainTopics: [
-          {
-            id: 1,
-            title: "Main Discussion",
-            description: "Primary topics discussed in this content",
-            quotes: [sentences[0] ? sentences[0].trim() + '...' : transcript.substring(0, 100) + '...'],
-            position: { x: 0, y: 0, z: 0 },
-            size: 4,
-            subtopics: []
-          },
-          {
-            id: 2,
-            title: "Key Insights",
-            description: "Important points and insights",
-            quotes: [sentences[Math.floor(sentences.length/2)] ? sentences[Math.floor(sentences.length/2)].trim() + '...' : transcript.substring(transcript.length/2, transcript.length/2 + 100) + '...'],
-            position: { x: 25, y: 5, z: 15 },
-            size: 3,
-            subtopics: []
-          },
-          {
-            id: 3,
-            title: "Conclusion",
-            description: "Final thoughts and takeaways",
-            quotes: [sentences[sentences.length-1] ? sentences[sentences.length-1].trim() + '...' : transcript.substring(transcript.length - 100)],
-            position: { x: -20, y: -5, z: 20 },
-            size: 3,
-            subtopics: []
-          }
-        ]
-      };
-    };
-    
-    // Try Claude AI first
-    if (process.env.CLAUDE_API_KEY) {
-      console.log('Attempting Claude AI analysis...');
-      
-      try {
-        const cleanedTranscript = transcript
-          .replace(/\[.*?\]/g, '')
-          .replace(/\(.*?\)/g, '')
-          .replace(/\s+/g, ' ')
-          .trim();
+    try {
+        const { transcript } = req.body;
         
-        const message = await anthropic.messages.create({
-          model: "claude-3-sonnet-20240229",
-          max_tokens: 2000,
-          temperature: 0.2,
-          messages: [
-            {
-              role: "user",
-              content: `Analyze this transcript and identify 3-5 SPECIFIC, CONCRETE topics that are actually discussed in detail. 
+        if (!transcript || transcript.trim().length === 0) {
+            return res.status(400).json({ error: 'Transcript is required' });
+        }
 
-DO NOT create generic topics like "Introduction", "Main Discussion", "Conclusion".
-DO NOT create topics like "Key Points" or "Final Thoughts".
+        console.log('Analyzing transcript of length:', transcript.length);
 
-Instead, identify the ACTUAL SUBJECTS being talked about, such as:
-- Specific technologies mentioned
-- Particular concepts explained  
-- Named methodologies discussed
-- Concrete examples given
-- Specific industries/fields covered
+        const enhancedPrompt = `You are an expert podcast analyst. Analyze this podcast transcript and extract detailed topics with rich, specific information. 
 
-Return ONLY valid JSON:
+TRANSCRIPT:
+${transcript}
+
+Please provide a comprehensive analysis following this EXACT JSON structure:
+
 {
   "mainTopics": [
     {
       "id": 1,
-      "title": "Specific Topic Name (not generic)",
-      "description": "What specifically is discussed about this topic",
-      "quotes": ["Direct quote from transcript", "Another specific quote"],
-      "keywords": ["keyword1", "keyword2"],
+      "title": "Specific Topic Title",
+      "description": "Detailed 2-3 sentence description of what this topic covers and its significance in the discussion",
+      "quotes": [
+        "Exact memorable quote 1 from the transcript",
+        "Exact memorable quote 2 from the transcript",
+        "Exact memorable quote 3 from the transcript"
+      ],
+      "keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
+      "position": { "x": 0, "y": 0, "z": 0 },
+      "size": 4.5,
       "subtopics": [
         {
           "id": 11,
-          "title": "Specific subtopic",
-          "description": "Specific aspect discussed",
-          "quotes": ["Relevant quote"]
+          "title": "Specific Subtopic Title",
+          "description": "Detailed description of this specific aspect discussed",
+          "quotes": ["Exact quote related to this subtopic"],
+          "keywords": ["specific", "keyword", "terms"],
+          "position": { "x": 15, "y": 8, "z": -10 },
+          "size": 2.5
         }
       ]
     }
   ]
 }
 
-Focus on CONCRETE topics that someone could learn something specific about.
+ANALYSIS REQUIREMENTS:
 
-Transcript: "${cleanedTranscript.substring(0, 4000)}"`
-            }
-          ]
+1. TOPIC IDENTIFICATION:
+   - Find 3-6 MAJOR topics that were substantially discussed (not just mentioned)
+   - Topics should represent distinct themes, not overlapping concepts
+   - Focus on topics that had genuine depth and multiple perspectives shared
+   - Prioritize topics with concrete examples, stories, or detailed explanations
+
+2. TOPIC TITLES:
+   - Use specific, descriptive titles (not generic like "Technology" but "AI's Impact on Creative Industries")
+   - Make titles compelling and informative
+   - Capture the specific angle or perspective discussed
+
+3. DESCRIPTIONS:
+   - Write 2-3 sentences explaining what was actually discussed about this topic
+   - Include WHY this topic matters based on the conversation
+   - Mention specific contexts, examples, or applications discussed
+   - Avoid generic descriptions - be specific to THIS conversation
+
+4. QUOTES EXTRACTION:
+   - Extract 2-4 EXACT quotes per topic (verbatim from transcript)
+   - Choose impactful, memorable, or insightful quotes
+   - Select quotes that capture key insights, surprising facts, or strong opinions
+   - Prioritize quotes with specific data, personal stories, or unique perspectives
+   - Each quote should be 10-50 words long for readability
+
+5. KEYWORDS:
+   - Include 4-6 specific terms actually used in the discussion
+   - Mix technical terms, concepts, names, and action words
+   - Focus on terms that would help someone find or understand this topic
+   - Include both broad concepts and specific terminology
+
+6. SUBTOPICS:
+   - Create 1-3 subtopics per main topic
+   - Subtopics should be specific aspects, examples, or dimensions of the main topic
+   - Each subtopic should have been discussed for at least 2-3 exchanges
+   - Include specific quotes and keywords for each subtopic
+
+7. CONVERSATION CONTEXT:
+   - Focus on topics where multiple viewpoints were shared
+   - Prioritize topics with personal experiences, case studies, or examples
+   - Include topics that generated follow-up questions or deeper exploration
+   - Look for topics that connect to broader themes or implications
+
+8. DEPTH INDICATORS:
+   - Topics with specific statistics, data, or research mentioned
+   - Topics where personal anecdotes or stories were shared
+   - Topics that included practical advice or actionable insights
+   - Topics that addressed challenges, solutions, or future implications
+   - Topics that included comparisons, contrasts, or multiple perspectives
+
+POSITIONING (use these coordinates for visual layout):
+- Main Topic 1: {"x": 0, "y": 0, "z": 0}
+- Main Topic 2: {"x": 35, "y": 5, "z": 25}
+- Main Topic 3: {"x": -30, "y": -8, "z": 20}
+- Main Topic 4: {"x": 25, "y": 15, "z": -25}
+- Main Topic 5: {"x": -35, "y": 10, "z": -15}
+- Main Topic 6: {"x": 15, "y": -12, "z": 30}
+
+For subtopics, position them 12-18 units away from their parent topic.
+
+SIZE GUIDELINES:
+- Main topics: 3.5-5.5 (based on discussion depth and time spent)
+- Subtopics: 2.0-3.0 (based on detail level)
+
+Return ONLY the JSON object with NO additional text or formatting. Ensure all quotes are extracted exactly as spoken in the transcript.`;
+
+        const message = await anthropic.messages.create({
+            model: "claude-3-5-sonnet-20241022",
+            max_tokens: 8000,
+            temperature: 0.3,
+            messages: [
+                {
+                    role: "user",
+                    content: enhancedPrompt
+                }
+            ]
         });
 
+        console.log('Claude response received');
+        
         let analysisText = message.content[0].text.trim();
-        console.log('Claude response received, length:', analysisText.length);
         
-        // Extract JSON from response
-        const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          analysisText = jsonMatch[0];
+        // Clean up the response to ensure it's valid JSON
+        if (analysisText.startsWith('```json')) {
+            analysisText = analysisText.replace(/```json\s*/, '').replace(/```\s*$/, '');
+        }
+        if (analysisText.startsWith('```')) {
+            analysisText = analysisText.replace(/```\s*/, '').replace(/```\s*$/, '');
         }
         
-        const analysis = JSON.parse(analysisText);
-        
-        if (analysis.mainTopics && analysis.mainTopics.length > 0) {
-          console.log('✅ Claude analysis successful');
-          return res.json(analysis);
-        } else {
-          throw new Error('No topics in Claude response');
+        try {
+            const analysis = JSON.parse(analysisText);
+            
+            // Validate the structure
+            if (!analysis.mainTopics || !Array.isArray(analysis.mainTopics)) {
+                throw new Error('Invalid analysis structure');
+            }
+            
+            console.log('Analysis completed successfully, found', analysis.mainTopics.length, 'topics');
+            res.json(analysis);
+            
+        } catch (parseError) {
+            console.error('JSON parse error:', parseError);
+            console.log('Raw response:', analysisText.substring(0, 500));
+            
+            // Return a structured error response
+            res.status(500).json({ 
+                error: 'Failed to parse AI response',
+                details: parseError.message,
+                rawResponse: analysisText.substring(0, 200) + '...'
+            });
         }
-        
-      } catch (claudeError) {
-        console.error('Claude AI failed:', claudeError.message);
-        console.log('Falling back to simple analysis...');
-      }
-    } else {
-      console.log('No Claude API key, using fallback analysis...');
+
+    } catch (error) {
+        console.error('Analysis error:', error);
+        res.status(500).json({ 
+            error: 'Analysis failed', 
+            details: error.message 
+        });
     }
-    
-    // Return fallback analysis
-    const fallbackAnalysis = createFallback();
-    console.log('✅ Returning fallback analysis');
-    console.log('=== ANALYSIS REQUEST END ===');
-    res.json(fallbackAnalysis);
-    
-  } catch (error) {
-    console.error('=== ANALYSIS ERROR ===');
-    console.error('Error analyzing transcript:', error);
-    console.error('Error stack:', error.stack);
-    console.error('=== END ERROR ===');
-    
-    // Even on error, try to return something useful
-    try {
-      const basicAnalysis = {
-        mainTopics: [
-          {
-            id: 1,
-            title: "Content Analysis",
-            description: "Basic analysis of the provided content",
-            quotes: [req.body.transcript ? req.body.transcript.substring(0, 100) + '...' : 'No content available'],
-            position: { x: 0, y: 0, z: 0 },
-            size: 4,
-            subtopics: []
-          }
-        ]
-      };
-      res.json(basicAnalysis);
-    } catch (finalError) {
-      res.status(500).json({ error: 'Analysis failed completely: ' + error.message });
-    }
-  }
 });
 
 // Test endpoint for direct transcript analysis
