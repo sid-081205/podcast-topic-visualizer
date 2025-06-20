@@ -1,6 +1,25 @@
 # podcast topic visualizer
 
-ai-powered 3d visualization of podcast transcripts. paste text, get floating topic bubbles.
+made for the claude hackathon: ai-powered 3d visualization of podcast transcripts. paste text, get floating topic bubbles.
+
+## demo video
+
+**github doesn't support html video tags**. use these instead:
+
+**option 1: youtube** (best):
+```markdown
+[![demo video](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://youtube.com/watch?v=YOUR_VIDEO_ID)
+```
+
+**option 2: gif** (works directly):
+```markdown
+![demo](demo.gif)
+```
+
+**option 3: link to google drive**:
+```markdown
+[📹 watch demo video](https://drive.google.com/file/d/YOUR_FILE_ID/view)
+```
 
 ## what it does
 
