@@ -39,28 +39,6 @@ click "show demo" to see example visualization without transcript
 - **ai**: anthropic claude 3 sonnet
 - **build**: vite
 
-## api
-
-- `GET /health` - server status
-- `POST /api/analyze` - extract topics from transcript
-
-## troubleshooting
-
-**nothing happens on analyze:**
-- check server running: `curl localhost:3001/health`
-- verify api key in `.env`
-- transcript needs 200+ characters
-
-**analysis fails:**
-- invalid claude api key
-- api quota exceeded  
-- transcript too short/generic
-
-**no visualization:**
-- try demo mode first
-- check browser webgl support
-- look for js errors in console
-
 ## visualization features
 
 - **main topics**: large colored spheres
@@ -69,31 +47,6 @@ click "show demo" to see example visualization without transcript
 - **click details**: quotes, descriptions, keywords
 - **smooth animations**: floating, rotation, transitions
 
-## file structure
-
-```
-├── index.html     # ui and styles
-├── main.js        # 3d visualization logic  
-├── server.js      # backend + ai integration
-└── package.json   # deps and scripts
-```
-
 ## best transcripts
 
-works well with:
-- technical discussions (ai, programming)
-- interview shows (business, startup)  
-- educational content (lectures, talks)
-- panel discussions (politics, philosophy)
-
-minimum 200 chars, longer = better analysis
-
-## contributing
-
-open to prs for:
-- new visualization effects
-- better topic extraction
-- mobile support
-- export features
-
-mit license
+honestly, it's not very robust - gives weird bubble topics for the simplest of podcasts but cool idea nonetheless.
