@@ -4,10 +4,8 @@ made for the claude hackathon: ai-powered 3d visualization of podcast transcript
 
 ## demo video
 
-**link to google drive**:
-```markdown
-[📹 watch demo video](https://drive.google.com/file/d/1is7eS1uCunCuYrYbiNuk-6xYddaJ4sYC/view?usp=share_link)
-```
+**link to a demo**:
+https://drive.google.com/file/d/1is7eS1uCunCuYrYbiNuk-6xYddaJ4sYC/view?usp=share_link
 
 ## what it does
 
